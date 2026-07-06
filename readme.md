@@ -7,6 +7,8 @@ modelagem, análise, pipeline e Data App.
 **Candidato:** Carlos Gabriel Guimarães Sonomiya
 **Prazo:** 5 dias corridos
 
+Planejamento detalhado do projeto disponível em [`PLANEJAMENTO.md`](./PLANEJAMENTO.md).
+
 ---
 
 ## 1. Escolha do dataset
@@ -34,14 +36,16 @@ removidas por não serem necessárias ao escopo do case).
 │   ├── data_quality_report.md
 │   ├── data_quality_report.html
 │   └── prints/                -> evidências visuais de cada etapa
+│       └── sql/                -> prints do resultado das queries do dashboard
 ├── scripts/
-│   ├── converter.py            -> parquet -> CSV (remoção de embeddings)
-│   ├── data_quality_report.py  -> Item 4: relatório de qualidade de dados
-│   ├── extract_features_ia.py  -> Item 5: extração de features via IA (Groq)
-│   ├── modelagem_local.py      -> Item 6: modelagem dimensional (Kimball)
+│   ├── converter.py             -> parquet -> CSV (remoção de embeddings)
+│   ├── data_quality_report.py   -> Item 4: relatório de qualidade de dados
+│   ├── extract_features_ia.py   -> Item 5: extração de features via IA (Groq)
+│   ├── modelagem_local.py       -> Item 6: modelagem dimensional (Kimball)
 │   ├── gerar_vendas_simuladas.py -> apoio ao Item 7 (série temporal)
 ├── app/
-│   └── app.py                  -> Item 9: Data App (Streamlit)
+│   └── app.py                   -> Item 9: Data App (Streamlit)
+├── PLANEJAMENTO.md              -> Item 0: planejamento do projeto
 └── README.md
 ```
 
@@ -50,9 +54,8 @@ removidas por não serem necessárias ao escopo do case).
 ## 3. Itens desenvolvidos
 
 ### Item 0 — Planejamento
-Planejamento executado de forma incremental ao longo dos 5 dias, priorizando:
-(1) fundação e ingestão, (2) qualidade e IA, (3) modelagem e análise,
-(4) pipeline e Data App, (5) apresentação final.
+Ver [`PLANEJAMENTO.md`](./PLANEJAMENTO.md) — quadro Kanban simplificado com
+marcos diários, riscos identificados e mitigações.
 
 ### Item 1 — Escolha da base de dados
 Ver seção 1 acima.
@@ -140,7 +143,8 @@ a versão válida e utilizada nas etapas seguintes.
 
 ### Item 7 — Analisar (Dashboard)
 Dashboard construído no **Metabase** (módulo Analisar → Visualização da
-Dadosfera), com 5 visualizações e análise de série temporal:
+Dadosfera), organizado na coleção **"Carlos Sonomiya - 07_2026"**, com 5
+visualizações e análise de série temporal:
 
 1. **Receita Mensal** (linha) — série temporal, 12 meses
 2. **Receita por Categoria de Produto** (barras)
@@ -155,6 +159,9 @@ associando os 300 produtos processados por IA a transações fictícias
 distribuídas ao longo de 12 meses, com sazonalidade baseada na estação
 sugerida via IA. Os dados de produto são reais; as transações de venda são
 sintéticas, para fins de demonstração analítica.
+
+As queries SQL utilizadas em cada visualização estão documentadas na
+seção 6 abaixo.
 
 ### Item 8 — Pipelines
 Pipeline criada no módulo **Coletar → Pipelines**, com fonte em Google Sheets
@@ -218,6 +225,75 @@ Como a Dadosfera substituiria a arquitetura atual de um cliente de e-commerce:
 
 ---
 
-## 6. Vídeo de apresentação
+## 6. Queries SQL do Dashboard (Item 7)
+
+Todas as visualizações do dashboard foram construídas via **Consulta SQL** no
+Metabase, sobre a tabela `PUBLIC.TB__SPZISE__VENDAS_SIMULADAS` (Snowflake).
+Prints do resultado de cada query em `docs/prints/sql/`.
+
+### 1. Receita Mensal (Série Temporal)
+
+```sql
+SELECT
+    DATE_TRUNC('month', TO_DATE(DATA_VENDA, 'YYYY-MM-DD')) AS mes,
+    SUM(RECEITA) AS receita_total
+FROM PUBLIC.TB__SPZISE__VENDAS_SIMULADAS
+GROUP BY DATE_TRUNC('month', TO_DATE(DATA_VENDA, 'YYYY-MM-DD'))
+ORDER BY mes
+```
+![Receita Mensal](docs/prints/sql/01_receita_mensal.png)
+
+### 2. Receita por Categoria de Produto
+
+```sql
+SELECT
+    PRODUCT_GROUP_NAME,
+    SUM(RECEITA) AS receita_total
+FROM PUBLIC.TB__SPZISE__VENDAS_SIMULADAS
+GROUP BY PRODUCT_GROUP_NAME
+ORDER BY receita_total DESC
+```
+![Receita por Categoria](docs/prints/sql/02_receita_categoria.png)
+
+### 3. Distribuição de Produtos por Estilo
+
+```sql
+SELECT
+    ESTILO,
+    COUNT(DISTINCT ARTICLE_ID) AS total_produtos
+FROM PUBLIC.TB__SPZISE__VENDAS_SIMULADAS
+GROUP BY ESTILO
+ORDER BY total_produtos DESC
+```
+![Distribuição por Estilo](docs/prints/sql/03_distribuicao_estilo.png)
+
+### 4. Vendas por Estação Sugerida
+
+```sql
+SELECT
+    ESTACAO_SUGERIDA,
+    SUM(QUANTIDADE) AS total_unidades_vendidas
+FROM PUBLIC.TB__SPZISE__VENDAS_SIMULADAS
+GROUP BY ESTACAO_SUGERIDA
+ORDER BY total_unidades_vendidas DESC
+```
+![Vendas por Estação](docs/prints/sql/04_vendas_estacao.png)
+
+### 5. Top 10 Departamentos por Receita
+
+```sql
+SELECT
+    DEPARTMENT_NAME,
+    SUM(RECEITA) AS receita_total
+FROM PUBLIC.TB__SPZISE__VENDAS_SIMULADAS
+GROUP BY DEPARTMENT_NAME
+ORDER BY receita_total DESC
+LIMIT 10
+```
+![Top 10 Departamentos](docs/prints/sql/05_top_departamentos.png)
+
+---
+
+## 7. Vídeo de apresentação
 
 [Link do vídeo será adicionado aqui]
