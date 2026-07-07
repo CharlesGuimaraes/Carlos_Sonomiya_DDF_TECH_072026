@@ -90,6 +90,11 @@ dados completo documentado abaixo.
 | detail_desc | Descrição textual livre — base da extração via IA |
 | image_url | URL da imagem do produto |
 
+**Organização em zonas de Data Lake:**
+- **Raw/Bronze:** `hm_ecommerce_products` — dataset importado sem transformações
+- **Staged/Silver:** `produtos_features_ia`, `vendas_simuladas` — dados processados/enriquecidos (IA e simulação)
+- **Curated/Gold:** `vw_catalogo_enriquecido_v2`, `vw_resumo_categoria_estilo` — visões finais prontas para consumo analítico (dashboard e Data App)
+
 ### Item 4 — Data Quality
 Relatório de qualidade gerado via script Python (`scripts/data_quality_report.py`),
 cobrindo as 4 dimensões clássicas de qualidade de dados:
@@ -102,6 +107,14 @@ cobrindo as 4 dimensões clássicas de qualidade de dados:
 
 Relatório completo disponível em `docs/data_quality_report.md` e
 `docs/data_quality_report.html`.
+
+**Nota sobre a ferramenta:** o relatório foi implementado em Python/pandas
+(`scripts/data_quality_report.py`) ao invés de bibliotecas como
+`great-expectations` ou `soda-core`, por agilidade de execução dentro do
+prazo do case. As 4 dimensões de qualidade avaliadas são as mesmas que essas
+ferramentas cobrem, e o script está estruturado de forma que as mesmas regras
+poderiam ser facilmente portadas para `soda-core` (que usa uma sintaxe YAML
+declarativa muito próxima das checagens já implementadas aqui).
 
 ### Item 5 — Processar (IA)
 Extração de atributos estruturados a partir da descrição textual (`detail_desc`)
@@ -120,6 +133,14 @@ por eficiência de tempo/custo de API. A lógica é idêntica e escalável para 
 dataset completo apenas ajustando o parâmetro `SAMPLE_SIZE`.
 
 ### Item 6 — Modelagem de dados
+
+**Justificativa da escolha (Kimball vs. Data Vault):** optou-se pelo modelo
+Kimball (esquema estrela) por ser o mais adequado a um cenário orientado a
+consumo analítico direto (dashboard e Data App), com foco em performance de
+consulta e simplicidade de entendimento para o time de negócio. Data Vault
+seria mais indicado em cenários com múltiplas fontes concorrentes e forte
+necessidade de rastreabilidade histórica, o que não é o caso deste projeto.
+
 Modelo dimensional (Kimball / esquema estrela) com:
 - **Dimensões:** `dim_produto`, `dim_categoria`, `dim_cor`, `dim_features_ia`
 - **Fato:** `fato_produto`
@@ -211,6 +232,7 @@ Como a Dadosfera substituiria a arquitetura atual de um cliente de e-commerce:
 | Dataset sem transações reais (necessário para série temporal) | Geração de vendas simuladas, claramente identificadas como sintéticas |
 | Sem opção de exclusão de ativos no Catálogo | Versionamento por sufixo (`_v2`) documentado |
 | Limite de 250MB por upload na Dadosfera | Remoção de colunas não essenciais (embeddings, URLs, descrições longas) das visões mais pesadas |
+| Biblioteca de qualidade de dados (great-expectations/soda-core) não utilizada | Implementação equivalente em pandas, por agilidade dentro do prazo |
 
 ---
 
@@ -294,6 +316,19 @@ LIMIT 10
 
 ---
 
-## 7. Vídeo de apresentação
+## 7. Links diretos para os ativos na Dadosfera
+
+- [Dataset: hm_ecommerce_products](https://app.dadosfera.ai/pt-BR/catalog/data-assets/cf2ea4cd-0735-4102-8181-e8cf78f58f23)
+- [Dataset: produtos_features_ia](https://app.dadosfera.ai/pt-BR/catalog/data-assets/bfdb1abb-cf8e-4473-ac24-87b9e7192f44)
+- [Dataset: vendas_simuladas](https://app.dadosfera.ai/pt-BR/catalog/data-assets/273806f7-4608-49aa-94d6-60c91f48e2bb)
+- [Visão: vw_catalogo_enriquecido_v2](https://app.dadosfera.ai/pt-BR/catalog/data-assets/2d042cd5-1c37-4e9f-9118-d452e61d7a79)
+- [Visão: vw_resumo_categoria_estilo](https://app.dadosfera.ai/pt-BR/catalog/data-assets/1ae2ea36-4f83-469b-83f1-7cabce0ae5a2)
+- [Pipeline: Pipeline_Resumo_Categoria_Estilo](https://app.dadosfera.ai/pt-BR/collect/pipelines/d8e34475-ebd0-4763-bc8c-05390236064b)
+- [Coleção Metabase: Carlos Sonomiya - 07_2026](https://metabase-treinamentos.dadosfera.ai/collection/1140-carlos-sonomiya-07-2026)
+- [Dashboard: Case Técnico Dadosfera - H&M E-commerce Analytics](https://metabase-treinamentos.dadosfera.ai/dashboard/299-dashboard-case-tecnico-dadosfera-h-m-e-commerce-analytics)
+
+---
+
+## 8. Vídeo de apresentação
 
 [Link do vídeo será adicionado aqui]
