@@ -331,4 +331,4 @@ LIMIT 10
 
 ## 8. Vídeo de apresentação
 
-[Link do vídeo será adicionado aqui]
+https://youtu.be/6JranSWeqRc
